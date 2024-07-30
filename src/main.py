@@ -1,7 +1,9 @@
-from abc import ABC, abstractmethod
+from collections import deque
 import json
+
+from abc import ABC, abstractmethod
 from random import randint
-from typing import Dict, Tuple
+from typing import Dict, List, Tuple
 from math import floor
 
 from const import PATH
@@ -15,11 +17,27 @@ class Point:
     def __hash__(self) -> int:
         return hash((self.x, self.y))
 
-    def __eq__(self, value: object) -> bool:
-        return self.x == value.x and self.y == value.y
+    def __eq__(self, other) -> bool:
+        return self.x == other.x and self.y == other.y
 
     def __str__(self) -> str:
         return f"X: {self.x} Y: {self.y}"
+
+    def __repr__(self) -> str:
+        return f"Point(X:{self.x}, Y:{self.y})"
+
+    def get_neighboors(self) -> list:
+        # возможна проверка не вышел ли я за границу
+        return [Point(self.x, self.y+1), Point(self.x, self.y-1),
+                Point(self.x+1, self.y), Point(self.x-1, self.y)]
+
+    @property
+    def point(self) -> tuple:
+        return self.x, self.y
+
+    @point.setter
+    def point(self, x: int, y: int) -> None:
+        self.x, self.y = x, y
 
 
 class Enity(ABC):
@@ -27,51 +45,8 @@ class Enity(ABC):
         self.coordinate = point
         self.sprite = sprite
 
-
-class Grass(Enity):
-    def __init__(self, point: Point, sprite: str = "G") -> None:
-        super().__init__(point, sprite)
-
-
-class Rock(Enity):
-    def __init__(self, point: Point, sprite: str = "R") -> None:
-        super().__init__(point, sprite)
-
-
-class Tree(Enity):
-    def __init__(self, point: Point, sprite: str = "T") -> None:
-        super().__init__(point, sprite)
-
-
-class Creature(Enity, ABC):
-    def __init__(self, point: Point, sprite: str, speed: int, health: int) -> None:
-        super().__init__(point, sprite)
-        self.speed = speed
-        self.health = health
-
-        @abstractmethod
-        def make_move():
-            pass
-
-
-class Herbivore(Creature):
-    def __init__(self, point: Point, speed: int = 1, health: int = 5, sprite: str = "H") -> None:
-        super().__init__(point, sprite, speed, health)
-
-    def make_move():
-        pass
-
-
-class Predator(Creature):
-    def __init__(self, point: Point, speed: int = 2, health: int = 8, atack: int = 5, sprite: str = "P") -> None:
-        super().__init__(point, sprite, speed, health)
-        self.atack = atack
-
-    def make_move():
-        pass
-
-    def atake_herbivore():
-        pass
+    def get_coord(self) -> tuple:
+        return self.coordinate.x, self.coordinate.y
 
 
 class Map:
@@ -87,7 +62,6 @@ class Map:
         return self.height*self.weight
 
     def add_object(self, obj: Enity) -> Dict:
-        # возможно проверку на x, y у объекта выходит ли он за границы
         point = obj.coordinate
         self.map_coord[point] = obj
         return self.map_coord[point]
@@ -99,6 +73,88 @@ class Map:
         if point in self.map_coord.keys():
             return self.map_coord[point]
         return False
+
+    def get_all_object(self, sprite: str) -> List[Enity]:
+        return [point for point, enity in self.map_coord.items() if enity.sprite == sprite]
+
+    def check_have_object(self, point: Point) -> bool:
+        return 0 <= point.x < self.weight and 0 <= point.y < self.height
+    # def check_point(self, point: Point) -> bool:
+    #     return self.map_coord[point].sprite not in ["🌱", "⛰️ ", "🌲"]
+
+    def search_path(self, start: Point, target: Point) -> List[Point]:
+        queue = deque([(start, [start])])
+        visited = set([start])
+        neighbor_target = target.get_neighboors()
+        while queue:
+            current, path = queue.popleft()
+
+            if current in neighbor_target:
+                return path
+
+            for neighbor in current.get_neighboors():
+                if not self.check_have_object(neighbor):
+                    continue
+                if neighbor in self.map_coord:
+                    continue
+                if neighbor not in visited:
+                    visited.add(neighbor)
+                    queue.append((neighbor, path + [neighbor]))
+
+        return []
+
+
+class Grass(Enity):
+    def __init__(self, point: Point, sprite: str = "🌱") -> None:
+        super().__init__(point, sprite)
+
+
+class Rock(Enity):
+    def __init__(self, point: Point, sprite: str = "⛰️ ") -> None:
+        super().__init__(point, sprite)
+
+
+class Tree(Enity):
+    def __init__(self, point: Point, sprite: str = "🌲") -> None:
+        super().__init__(point, sprite)
+
+
+class Creature(Enity, ABC):
+    def __init__(self, point: Point, sprite: str, speed: int, health: int) -> None:
+        super().__init__(point, sprite)
+        self.speed = speed
+        self.health = health
+
+    def make_move(self, new_x, new_y):
+        self.point = Point(new_x. new_y)
+
+    def find_eat(self, map_matrix, start, sprite):
+        points = [Point(0, 1), Point(1, 0), Point(0, -1), Point(-1, 0)]
+        queue = list()
+        visited = set()
+
+        while queue:
+            curr = queue.pop()
+
+            if map_matrix.get(curr) == sprite:
+                return curr
+
+            for p in points:
+                neighbor = Point(curr.x+p.x, curr,)
+
+
+class Herbivore(Creature):
+    def __init__(self, point: Point, speed: int = 1, health: int = 5, sprite: str = "🐇") -> None:
+        super().__init__(point, sprite, speed, health)
+
+
+class Predator(Creature):
+    def __init__(self, point: Point, speed: int = 2, health: int = 8, atack: int = 5, sprite: str = '🐺') -> None:
+        super().__init__(point, sprite, speed, health)
+        self.atack = atack
+
+    def atake_herbivore(map_coord: Map, point: Point):
+        pass
 
 
 class Action:
@@ -131,8 +187,33 @@ class Action:
             self.add_objects(self.calculate_count(proportion),
                              object_map[obj_name])
 
-    def turn_actions():
-        pass
+    def turn_actions(self, spirit: str):
+        for cord, enit in self.map_matrix.map_coord.items():
+            if isinstance(enit, Predator):
+                grass = self.map_matrix.get_all_object("🐇")
+                short_path = []
+                for i in grass:
+                    short_path.append(self.map_matrix.search_path(cord, i))
+                print(enit.sprite, cord)
+                for i in short_path:
+                    print(i, end="\n")
+        # for cord, enit in self.map_matrix.map_coord.items:
+        #     if type(enit) == Predator:
+        #         neighbors = cord.get_neighboors()
+        #         flag = False
+        #         for point in neighbors:
+        #             if type(self.map_matrix.get_object(point)) == Herbivore:
+        #                 self.map_matrix.map_coord[point].health -= self.map_matrix.map_coord[cord].atack
+        #                 if self.map_matrix.map_coord[point].health < 0:
+        #                     self.map_matrix.delete_object(point)
+        #                 flag = True
+        #                 break
+        #         if flag:
+        #             grass = self.map_matrix.get_all_object("🌱")
+        #             short_path = []
+        #             for i in grass:
+        #                 short_path.append(self.map_matrix.search_path(cord, i))
+        #             print(*short_path)
 
 
 class Render:
@@ -158,9 +239,9 @@ class Render:
             for j in range(self.map_matrix.weight):
                 obj = self.map_matrix.get_object(Point(j, i))
                 if obj:
-                    print("|" + obj.sprite + "|", end=" ")
+                    print("|" + obj.sprite + "|", end="")
                 else:
-                    print("| |", end=" ")
+                    print("|  |", end="")
             print()
 
 
@@ -178,6 +259,9 @@ class Simulation:
         self.render.print_info()
         self.action.init_actions()
         self.render.draw_map()
+        self.action.turn_actions()
+        # while(True):
+        #     self.render.draw_map()
 
     def pause_simulation():
         pass
@@ -193,3 +277,10 @@ class Reader:
 if __name__ == "__main__":
     a = Simulation(5, 5)
     a.start_simulation()
+
+    # найти всех сущест +
+    # функция получения соседних точек +
+    # функция для поиска кратчайших путей bfs +
+    # метод который будет для всех существ вызывать
+    # метод поиска кратчайшего пути
+    # пото

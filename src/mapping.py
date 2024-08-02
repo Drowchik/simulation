@@ -1,7 +1,7 @@
 from collections import deque
 from typing import Dict, List, Tuple
 
-from enity import Enity
+from enity import Enity, Grass
 from point import Point
 
 
@@ -35,8 +35,6 @@ class Map:
 
     def check_have_object(self, point: Point) -> bool:
         return 0 <= point.x < self.weight and 0 <= point.y < self.height
-    # def check_point(self, point: Point) -> bool:
-    #     return self.map_coord[point].sprite not in ["🌱", "⛰️ ", "🌲"]
 
     def search_path(self, start: Point, target: Point) -> List[Point]:
         queue = deque([(start, [start])])

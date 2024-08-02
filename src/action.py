@@ -68,7 +68,6 @@ class Action:
         return all_short_path
 
     def action_enity(self, lists):
-        # накладывание одного персонажа на другого
         for shortest_list in lists:
             cord = shortest_list[0]
             enit = self.map_matrix.get_object(cord)

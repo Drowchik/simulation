@@ -11,7 +11,7 @@ class Render:
         self.map_matrix = map_coord
 
     @staticmethod
-    def print_info():
+    def print_info() -> None:
         dict_info_object = {
             'P': 'predator',
             'H': 'herbivores',
@@ -23,7 +23,7 @@ class Render:
             print(f'{key} - {value}')
         print()
 
-    def draw_map(self):
+    def draw_map(self) -> None:
         for i in range(self.map_matrix.height):
             for j in range(self.map_matrix.weight):
                 obj = self.map_matrix.get_object(Point(j, i))
@@ -42,23 +42,14 @@ class Simulation:
         self.action = Action(map_coord=self.matrix, proportion_file=PATH)
         self.is_paused = False
 
-    def next_turn(self):
+    def next_turn(self) -> None:
         self.render.draw_map()
         self.action.turn_actions()
         self.move_count += 1
 
-    async def start_simulation(self):
+    async def start_simulation(self) -> None:
         self.render.print_info()
         self.action.init_actions()
-        # print("1 итерация")
-        # self.render.draw_map()
-        # self.action.turn_actions()
-        # print("2 итерация")
-        # self.render.draw_map()
-        # self.action.calculate_more_enity()
-        # print("После добавки новых дебиков")
-        # self.render.draw_map()
-
         while (True):
             if not self.is_paused:
                 print(f"Итерация: {self.move_count}")
@@ -69,7 +60,7 @@ class Simulation:
                 print("Игра поставлена на Паузу. Для продолжения тыкните Enter")
                 await asyncio.get_event_loop().run_in_executor(None, input)
                 self.is_paused = False
-            await asyncio.sleep(1)
+            await asyncio.sleep(1.5)
 
     async def pause_simulation(self):
         self.is_paused = not self.is_paused

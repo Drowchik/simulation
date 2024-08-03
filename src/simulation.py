@@ -21,7 +21,7 @@ class Render:
         }
         for key, value in dict_info_object.items():
             print(f'{key} - {value}')
-        print()
+        print("Нажмите Enter для переключения паузы:")
 
     def draw_map(self) -> None:
         for i in range(self.map_matrix.height):
@@ -47,7 +47,7 @@ class Simulation:
         self.action.turn_actions()
         self.move_count += 1
 
-    async def start_simulation(self) -> None:
+    def start_simulation(self) -> None:
         self.render.print_info()
         self.action.init_actions()
         while (True):
@@ -56,15 +56,13 @@ class Simulation:
                 self.next_turn()
                 if not self.move_count % 3:
                     self.action.calculate_more_enity()
-            else:
-                print("Игра поставлена на Паузу. Для продолжения тыкните Enter")
-                await asyncio.get_event_loop().run_in_executor(None, input)
-                self.is_paused = False
-            await asyncio.sleep(1.5)
+            time.sleep(1.5)
 
-    async def pause_simulation(self):
-        self.is_paused = not self.is_paused
-        if self.is_paused:
-            print("Игра на паузе.")
-        else:
-            print("Игра продолжается.")
+    def listen_for_pause(self):
+        while True:
+            input()
+            self.is_paused = not self.is_paused
+            if self.is_paused:
+                print("Игра на паузе. Для продолжения тыкните Enter")
+            else:
+                print("Игра продолжается.")

@@ -1,20 +1,13 @@
-import asyncio
+import concurrent.futures
 from simulation import Simulation
 
 
-async def listen_for_pause(simulation):
-    while True:
-        await asyncio.get_event_loop().run_in_executor(None, input, "Нажмите Enter для переключения паузы:")
-        await simulation.pause_simulation()
-
-
-async def main():
+def main():
     simulation = Simulation(5, 5)
-    await asyncio.gather(
-        simulation.start_simulation(),
-        listen_for_pause(simulation)
+    with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
+        executor.submit(simulation.start_simulation)
+        executor.submit(simulation.listen_for_pause)
 
-    )
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()
